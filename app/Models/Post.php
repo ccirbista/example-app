@@ -1,81 +1,30 @@
 <?php
 
 namespace App\Models;
-use Illuminate\Support\Facades\File;
-use Spatie\YamlFrontMatter\YamlFrontMatter;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
-class Post{
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use App\Models\Category;
+use App\Models\User;
 
-    public $title;
-    public $excerpt;
-    public $date;
-    public $body;
-    public $slug;
+class Post extends Model
+{
+    use HasFactory;
 
-    public function __construct($title, $excerpt, $date, $body, $slug)
+    protected $guarded = [];
+
+    protected $with = ['category', 'author'];
+
+    //protected $fillable = ['title', 'slug', 'excerpt', 'body'];
+
+    public function category()
     {
-        $this->title = $title;
-        $this->excerpt = $excerpt;
-        $this->date = $date;
-        $this->body = $body;
-        $this->slug = $slug;
+        return $this->belongsTo(Category::class);
     }
 
-    public static function findPost($slug)
+    public function author()
     {
-
-        $post = static::allPosts()->firstWhere('slug', $slug);
-
-        if(! $post){
-            throw new ModelNotFoundException();
-        }
-
-        return $post;
-
-
-    }
-    public static function findStudent($slug)
-    {
-
-        if(! file_exists($path = resource_path("students/{$slug}.html"))){ //if the path does not exist redirect to home page
-            throw new ModelNotFoundException();
-        
-        }
-
-        return cache()->remember("students.{$slug}",5 , function() use ($path){ //the student is cached for 5 seconds
-        
-        return file_get_contents($path);
-        });
-
-
+        return $this->belongsTo(User::class, 'user_id');
     }
 
-    public static function allPosts()
-    {
-
-        return cache()->rememberForever('posts.all', function(){
-            $files = File::files(resource_path("posts"));
-    
-            return $posts = collect($files)
-                    ->map(function($item){
-                        $document = YamlFrontMatter::parseFile($item);
-                        return new Post(
-                            $document->title,
-                            $document->excerpt,
-                            $document->date,
-                            $document->body(),
-                            $document->slug
-                        );
-                    })->sortByDesc('date');
-            
-        });
-        
-    }
-
-    public static function allStudents()
-    {
-        return File::files(resource_path("students/"));
-    }
-    
 }

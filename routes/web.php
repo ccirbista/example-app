@@ -1,8 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Spatie\YamlFrontMatter\YamlFrontMatter;
 use App\Models\Post;
+use App\Models\Category;
+use Illuminate\Contracts\Foundation\Application\Logger;
+use Illuminate\Database\Query\Builder;
+use App\Models\User;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -18,34 +21,29 @@ use App\Models\Post;
 Route::get('/', function () {
 
     
-    
     return view('posts', [
-        'posts' => Post::allPosts()
+        'posts' => Post::latest()->get()
     ]);
 });
 
-Route::get('posts/{post}', function($slug){ //find a post by its slug and pass it to a view called post
+Route::get('posts/{post:slug}', function(Post $post){ //find a post by its slug and pass it to a view called posts
 
-
-    $post = Post::findPost($slug);
-    return view('post', [
+     
+     return view('post', [
         "post" => $post
     ]);
 
     
-})->where('post', '[A-z_\-]+');
+});
 
-Route::get('/students', function(){ //route to go to student's list
-    $students = Post::allStudents();
-    ddd($students);
-    return view('students', [
-        'students' => $students
+Route::get('categories/{category:slug}', function(Category $category){
+    return view('posts', [
+        'posts' => $category->posts
     ]);
 });
 
-Route::get('students/{student}', function($slug){//route to go to individual student's detail
-    
-    return view('student', [
-        'student' => Post::findStudent($slug)//inlining the route to make the code cleaner
+Route::get('authors/{author:username}', function(User $author){
+    return view('posts', [
+        'posts' => $author->posts
     ]);
-})->where('post', '[A-z_\-]+');
+});
